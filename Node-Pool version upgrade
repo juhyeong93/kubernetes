@@ -1,0 +1,51 @@
+Cluster / node-pool Version upgrade시 고려사항 정리
+
+PodDistruptionBudget이란.
+항상 최소한의 Pod수를 유지하도록 도와주는 기능.
+
+Check the pbd 
+
+#kubectl get pdb -A
+NAMESPACE      NAME                   MIN AVAILABLE   MAX UNAVAILABLE   ALLOWED DISRUPTIONS   AGE
+istio-system   istio-egressgateway    1               N/A               0                     306d
+istio-system   istio-ingressgateway   1               N/A               0                     306d
+istio-system   istiod                 1               N/A               0                     306d
+
+MIN AVAILABLE 1 인상황에서 Cluster 및 node pool 업데이트를 진행하였더니 최소한의 파드가 1개는 무조건 유지가 되야하기때문에 업그레이드가 되지 않았음.
+추가로 살펴봐야할것 
+
+HPA ( Horizontal Pod Autoscaler)
+hpa는 이름 그대로 pod를 수평적으로 스케일링 아웃함 /  replication controller, deployment, replicaset, statefulset 등의 워크로드 리소스를 scale out할 수 있다.
+여기서 우리가 확인해야 할 부분은 replicaset 의 replicas의 개수 이다. 만약 replicas의 개수가 1개이고 PDB도 1개라면 controller는 1개만 유지하려고하고 PDB는 최소한 1개의 파드만 동작하려고
+하는 상태에서 Node-pool version upgrade를 진행한다면 upgrade시 현재 동작하는 POD를 cordon(sheduling 금지)후 새로운 Pod를 생성해야하는데 replicas는 무조건 1개의 파드만 동작해야한다고
+정의 되있고 PDB는 최소한 한개를 유지해야게끔 정의 되어있기때문에 Node-pool 업그레이드시 에러가 발생 했었다.
+
+$ kubectl get hpa -A
+NAMESPACE      NAME                   REFERENCE                         TARGETS   MINPODS   MAXPODS   REPLICAS   AGE
+istio-system   istio-ingressgateway   Deployment/istio-ingressgateway   4%/80%    1         5         1          365d
+istio-system   istiod                 Deployment/istiod                 1%/80%    1         5         1          365d
+
+kubectl edit deployment istio-ingressgateway -n istio-system
+spec:
+  replicas:1 
+replicas 동작 확인 가능
+
+
+kubectl edit hpa -n istio-system
+
+
+이슈 해결 두개의 솔루션중 하나 선택해서 진행.
+
+
+1. PDB를 0으로 바꾸고 업그레이드 진행
+#kubectl edit pdb istio-ingressgateway -n istio-system           -> kubectl edit pdb [NAME] -n [NAMESPACE NAME]
+MinAvailable: 1 -> 0으로 변경
+
+
+2. replicas를 2로 변경후 진핸( 이럴시 PDB 값 1에 대한 충족하기때문에 이상없이 업그레이드 가능)
+
+#kubectl get hpa -n istio-system
+MinReplicas: 1 -> 2로 변경
+
+
+
