@@ -74,8 +74,7 @@ Default node zones:
 현재 구성이 위와 같이 되있었다면 특정노드풀을 선책하고 Edit을 선택하여 asia-southeast1-b만 남기고 저장
 각 zone의 노드에 있었던 모든 파드들이 하나로 줄어들면서 유휴 ip도 생겨 업그레이드 진행시 문제 없이 진행됨
 
-보통 노드풀을 만들때 Maximum Pods per Node가 110 defualt로 설정 되는데 시스템 규모를 고려하여 cluster및 nodepool 생성시 pod 개수를 조정 필요.
-
-
+보통 노드풀을 만들때 Maximum Pods per Node가 110 defualt로 설정 되는데 시스템 규모를 고려하여 cluster및 nodepool 생성시 옵션으로 pod 개수를 조정 필요.
+--default-max-pods-per-node "32"
 
 
