@@ -47,5 +47,35 @@ MinAvailable: 1 -> 0으로 변경
 #kubectl get hpa -n istio-system
 MinReplicas: 1 -> 2로 변경
 
+K8S 구성환경을 잘 확인 해야하는데 region으로 cluster를 구성한 경우는 아래와 같이 수행
+gcloud container clusters upgrade CLUSTER_NAME --node-pool=NODE_POOL_NAME --region=[REGION]
+
+Test 서버나 많은 노드가 필요하지 않은 cluster들에 대해서 region이 아닌 zone 으로만 구성 했다면 아래와 같이 수행
+gcloud container clusters upgrade CLUSTER_NAME --node-pool=NODE_POOL_NAME --zone=[ZONE]
+
+
+**에러사항 추가
+위와 같이 수행을 하면 문제없이 업그레이드가 잘 진행되지만 특정 프로젝트에서(node pool이 많이 동작하는 cluster) 업그레이드시 "[ip address in pool is exhausted]"
+에러가 났다 이 에러는 VPC내 pod를 위해 할당한 subnet iprange범위에 넘어서서 에러가 발생.
+
+해결방법 
+
+1. subnet iprange를 늘려준다 초래
+ - 기본적으로 ip range를 한번 늘리면 다시 범위를 줄일수 없기때문에 업그레이드만을 위해 ip를 늘려준다면 유휴ip들이 남아 있어 ip 낭비 초래
+ 
+2. Default node zone을 1개로 줄이고 업그레이드 진행후 원복. (이 방법 선택하여 진행)
+Region:	
+                     asia-southeast1	
+Default node zones: 	
+                    asia-southeast1-b
+                    asia-southeast1-a
+                    asia-southeast1-c
+
+현재 구성이 위와 같이 되있었다면 특정노드풀을 선책하고 Edit을 선택하여 asia-southeast1-b만 남기고 저장
+각 zone의 노드에 있었던 모든 파드들이 하나로 줄어들면서 유휴 ip도 생겨 업그레이드 진행시 문제 없이 진행됨
+
+보통 노드풀을 만들때 Maximum Pods per Node가 110 defualt로 설정 되는데 시스템 규모를 고려하여 cluster및 nodepool 생성시 pod 개수를 조정 필요.
+
+
 
 
