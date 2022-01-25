@@ -19,7 +19,7 @@ google이 managed 하는 Saas 방식의 kubernetes는 일반 Linux 처럼 디스
       - Inode 이슈가 있는 node를 scheduling 하지 않도록 cordon을 시켜쥼
 
 #gcloud container clusters resize one-devops-ci --node-pool n2-pool-2 --num-nodes 2 --region asia-southeast1
-     - 문제가 있는 노드를 scheduling되지 않도록 한 후 cluster의 사이즈를 늘려줌.
+     - 문제가 있는 노드를 scheduling되지 않도록 한 후 node-pool의 사이즈를 늘려줌.
      - 이때 vm 생성이 오래걸린다면 ip부족을 의심해 볼수 있음. 구글의 개발 프로세스겠지만 error로 return 하지는않고  다만 시간이 좀 오래걸림.
 
 kubectl drain <node_ID> --force --ignore-daemonsets --delete-emptydir-data --grace-period=10 
